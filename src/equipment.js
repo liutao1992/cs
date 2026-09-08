@@ -60,7 +60,7 @@ export function createWeapon(type=0,held=true){const g=new THREE.Group();
   }
   g.userData.muzzle=new THREE.Vector3(0,.03,type===0?-.84:type===1?-.52:-.97);return g;
 }
-export function createBot(scene,index){const g=new THREE.Group(),shirt=mat(index%2?0x8b775d:0x77745d),pants=mat(0x555648),vest=mat(0x3d4134),scarf=mat(0xa8997b),boots=mat(0x30362e);const hitboxes=[];
+export function createBot(scene,index,elite=false){const g=new THREE.Group(),shirt=mat(elite?0x6e2f28:(index%2?0x8b775d:0x77745d)),pants=mat(0x555648),vest=mat(elite?0x40201c:0x3d4134),scarf=mat(elite?0x5a2a24:0xa8997b),boots=mat(0x30362e);const hitboxes=[];if(elite)g.scale.setScalar(1.35);
   const body=part(g,0,1.13,0,.48,.62,.3,shirt);hitboxes.push(body);part(g,0,1.15,-.18,.43,.45,.12,vest);
   for(let i=0;i<3;i++)part(g,-.14+i*.14,1.06,-.255,.11,.17,.065,glove);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.185,12,10),skin);head.scale.set(1,1.15,.92);head.position.set(0,1.66,0);g.add(head);hitboxes.push(head);head.userData.head=true;
@@ -77,4 +77,14 @@ export class AudioEngine{
   step(){this.noise(.055,650,.12);}
   reload(){this.noise(.11,2800,.27);this.tone(650,.04,.05,'square');}
   hit(){this.tone(1400,.065,.13,'triangle');}
+  sweep(f1,f2,duration,gain=.2,type='sine'){const c=this.context;if(!c||!this.volume)return;const osc=c.createOscillator(),amp=c.createGain();osc.type=type;osc.frequency.setValueAtTime(f1,c.currentTime);osc.frequency.exponentialRampToValueAtTime(Math.max(1,f2),c.currentTime+duration);amp.gain.setValueAtTime(gain*this.volume,c.currentTime);amp.gain.exponentialRampToValueAtTime(.001,c.currentTime+duration);osc.connect(amp);amp.connect(c.destination);osc.start();osc.stop(c.currentTime+duration);osc.onended=()=>{osc.disconnect();amp.disconnect();};}
+  streak(level=1){const notes=[523,659,784,988,1175];for(let i=0;i<=Math.min(level,4);i++)setTimeout(()=>this.tone(notes[i],.12,.16,'triangle'),i*70);}
+  headshot(){this.hit();this.tone(2200,.05,.1,'sine');}
+  killConfirm(){this.tone(880,.05,.1,'triangle');setTimeout(()=>this.tone(1320,.06,.1,'triangle'),55);}
+  perk(){this.tone(660,.07,.12,'square');setTimeout(()=>this.tone(880,.09,.12,'square'),75);}
+  airdrop(){this.sweep(300,1400,.6,.15);}
+  achievement(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.tone(f,.14,.14,'triangle'),i*110));}
+  waveStart(){this.tone(110,.4,.2,'sawtooth');}
+  bossRoar(){this.noise(.6,220,.5);this.tone(55,.5,.4,'sawtooth');}
+  slowmo(){this.sweep(400,80,.5,.2);}
 }

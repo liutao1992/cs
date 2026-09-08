@@ -81,7 +81,7 @@ export function createWorld(scene, renderer) {
   return {obstacles,solids,sites,materials,box};
 }
 
-export function drawMap(canvas, world, player=null, bots=[], bomb=null, preview=false){
+export function drawMap(canvas, world, player=null, bots=[], bomb=null, preview=false, pickups=[]){
   const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#1c2822';ctx.fillRect(0,0,w,h);
   const scale=preview?2.05:2.45,ox=w/2,oz=h/2;
   const xy=(x,z)=>[ox+x*scale,oz+z*scale];
@@ -89,6 +89,7 @@ export function drawMap(canvas, world, player=null, bots=[], bomb=null, preview=
   ctx.fillStyle='#89978040';ctx.strokeStyle='#b4c49f50';for(const o of world.obstacles){if(o.minZ<-31)continue;const [x,y]=xy(o.minX,o.minZ);ctx.fillRect(x,y,(o.maxX-o.minX)*scale,(o.maxZ-o.minZ)*scale);ctx.strokeRect(x,y,(o.maxX-o.minX)*scale,(o.maxZ-o.minZ)*scale);}
   for(const s of world.sites){const[x,y]=xy(s.x,s.z);ctx.fillStyle='#d5ed8b22';ctx.fillRect(x-8,y-8,16,16);ctx.fillStyle='#d5ed8b';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText(s.label,x,y+4);}
   if(bomb){const[x,y]=xy(bomb.x,bomb.z);ctx.fillStyle='#ff7956';ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();}
+  if(!preview)for(const p of pickups){const[x,y]=xy(p.x,p.z);ctx.fillStyle=`#${p.color.toString(16).padStart(6,'0')}`;ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);ctx.fillRect(-3,-3,6,6);ctx.restore();}
   if(player){for(const b of bots){if(b.health<=0||b.revealed<=0)continue;const[x,y]=xy(b.group.position.x,b.group.position.z);ctx.fillStyle='#f0a475';ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();}const[x,y]=xy(player.x,player.z);ctx.save();ctx.translate(x,y);ctx.rotate(-player.yaw);ctx.fillStyle='#e8ffb5';ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(-4,4);ctx.lineTo(4,4);ctx.closePath();ctx.fill();ctx.restore();}
   else{const[x,y]=xy(0,25);ctx.fillStyle='#d5ed8b';ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill();}
 }
