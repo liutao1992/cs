@@ -1,19 +1,63 @@
 import * as THREE from 'three';
+import { weaponSurface, mapWeaponGeometry } from './weapon-surfaces.js';
 const mat=(color,metalness=0,roughness=.7)=>new THREE.MeshStandardMaterial({color,metalness,roughness});
-const metal=mat(0x303736,.8,.34),edge=mat(0x555d57,.8,.3),wood=mat(0x825035,0,.8),black=mat(0x181e1d,.2,.7),skin=mat(0xb68d67),glove=mat(0x3c473a),cloth=mat(0x62634b);
-function part(group,x,y,z,w,h,d,material){const bevel=Math.min(.007,w/6,h/6,d/6),shape=new THREE.Shape();shape.moveTo(-w/2+bevel,-h/2+bevel);shape.lineTo(w/2-bevel,-h/2+bevel);shape.lineTo(w/2-bevel,h/2-bevel);shape.lineTo(-w/2+bevel,h/2-bevel);shape.closePath();const geometry=new THREE.ExtrudeGeometry(shape,{depth:d-2*bevel,bevelEnabled:true,bevelSegments:1,steps:1,bevelSize:bevel,bevelThickness:bevel});geometry.translate(0,0,-d/2+bevel);const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);group.add(m);return m;}
+const metal=weaponSurface('steel',0x303736,.8,.42),edge=weaponSurface('steel',0x555d57,.8,.36),wood=weaponSurface('wood',0x825035,0,.65),black=weaponSurface('steel',0x181e1d,.2,.7),skin=mat(0xb68d67),glove=weaponSurface('fabric',0x3c473a,0,.9),cloth=weaponSurface('fabric',0x62634b,0,1);
+function part(group,x,y,z,w,h,d,material){const bevel=Math.min(.007,w/6,h/6,d/6),shape=new THREE.Shape();shape.moveTo(-w/2+bevel,-h/2+bevel);shape.lineTo(w/2-bevel,-h/2+bevel);shape.lineTo(w/2-bevel,h/2-bevel);shape.lineTo(-w/2+bevel,h/2-bevel);shape.closePath();const geometry=new THREE.ExtrudeGeometry(shape,{depth:d-2*bevel,bevelEnabled:true,bevelSegments:3,steps:1,bevelSize:bevel,bevelThickness:bevel});geometry.translate(0,0,-d/2+bevel);mapWeaponGeometry(geometry);const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);group.add(m);return m;}
 function tube(group,x,y,z,r,len,material){const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,12),material);m.rotation.x=Math.PI/2;m.position.set(x,y,z);group.add(m);return m;}
+function profile(group,points,width,material){
+  const shape=new THREE.Shape();points.forEach(([z,y],i)=>i?shape.lineTo(z,y):shape.moveTo(z,y));shape.closePath();
+  const geometry=new THREE.ExtrudeGeometry(shape,{depth:width-.008,steps:1,bevelEnabled:true,bevelSegments:3,bevelSize:.004,bevelThickness:.004});
+  geometry.translate(0,0,-(width-.008)/2);geometry.rotateY(-Math.PI/2);mapWeaponGeometry(geometry);
+  const mesh=new THREE.Mesh(geometry,material);group.add(mesh);return mesh;
+}
+function organic(group,position,scale,material){
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),material);mesh.position.set(...position);mesh.scale.set(...scale);group.add(mesh);return mesh;
+}
+function sleeve(group,start,end,radius){
+  const a=new THREE.Vector3(...start),b=new THREE.Vector3(...end),direction=b.clone().sub(a);
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius*.78,radius,direction.length(),20,8),cloth);
+  const p=mesh.geometry.attributes.position;
+  for(let i=0;i<p.count;i++){const y=p.getY(i),angle=Math.atan2(p.getZ(i),p.getX(i));const fold=1+.045*Math.sin(y*105+angle*3)+.025*Math.cos(y*61-angle*5);p.setX(i,p.getX(i)*fold);p.setZ(i,p.getZ(i)*fold);}
+  mesh.geometry.computeVertexNormals();mesh.position.copy(a.add(b).multiplyScalar(.5));mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());group.add(mesh);
+}
+function hand(group,x,y,z,support=false){
+  organic(group,[x,y,z],[.055,.043,.076],glove);
+  organic(group,[x+.014,y+.031,z+.01],[.043,.013,.047],black);
+  for(let i=0;i<4;i++){
+    const finger=organic(group,[x-.033+i*.021,y-.02,z-.054],[.012,.021,.034],glove);finger.rotation.x=support?.75:.25;
+    organic(group,[x-.033+i*.021,y+.007,z-.046],[.01,.01,.017],edge);
+  }
+  const thumb=organic(group,[x+.047,y-.003,z+.005],[.018,.022,.045],glove);thumb.rotation.y=-.6;
+}
 export function createWeapon(type=0,held=true){const g=new THREE.Group();
   if(type===0){
     part(g,0,0,0,.115,.15,.42,metal);part(g,0,.07,.03,.09,.035,.38,edge);part(g,0,-.03,.33,.105,.18,.3,wood).rotation.x=-.08;
     part(g,0,-.03,-.33,.12,.11,.25,wood);tube(g,0,.03,-.58,.022,.38,metal);tube(g,0,.073,-.38,.02,.28,edge);tube(g,0,.03,-.8,.032,.075,black);
     part(g,0,.1,-.68,.024,.14,.035,black);part(g,0,.171,-.68,.07,.026,.035,edge);part(g,0,.104,.065,.077,.043,.05,black);
-    const mag=part(g,0,-.2,-.08,.073,.28,.12,black);mag.rotation.x=-.21;part(g,0,-.34,-.045,.076,.055,.13,edge).rotation.x=-.35;
+    const magazine=[[-.145,-.07],[-.02,-.07],[-.012,-.17],[.012,-.26],[.055,-.35],[-.044,-.395],[-.096,-.30],[-.13,-.19]];
+    profile(g,magazine,.071,black);
+    for(const side of [-1,1])for(let rib=0;rib<3;rib++){
+      const curve=new THREE.QuadraticBezierCurve3(new THREE.Vector3(side*.037,-.12,-.12+rib*.035),new THREE.Vector3(side*.037,-.25,-.105+rib*.035),new THREE.Vector3(side*.037,-.35,-.024+rib*.035));
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,12,.0035,5,false),metal));
+    }
     part(g,0,-.18,.13,.075,.21,.09,wood).rotation.x=-.24;part(g,.064,.025,-.04,.028,.025,.1,edge);
-    for(let i=0;i<5;i++)part(g,0,-.12-i*.039,-.142+i*.008,.077,.013,.011,edge);
+    for(const side of [-1,1]){
+      for(const z of [-.16,-.1,.1,.15])organic(g,[side*.059,-.027,z],[.003,.006,.006],edge);
+      part(g,side*.062,.004,.055,.005,.009,.13,black).rotation.x=.13;
+      for(let i=0;i<4;i++)part(g,side*.061,.006,-.25-i*.038,.003,.018,.022,black);
+    }
+    part(g,.079,.026,-.045,.055,.015,.027,black);
+    const guard=new THREE.Mesh(new THREE.TorusGeometry(.051,.005,8,24,Math.PI*1.55),metal);guard.rotation.y=Math.PI/2;guard.rotation.z=.7;guard.position.set(0,-.124,.046);g.add(guard);
+    part(g,0,-.116,.041,.009,.045,.013,black).rotation.x=.4;
   }else if(type===1){part(g,0,0,-.07,.105,.115,.3,metal);part(g,0,-.13,.03,.088,.2,.095,black).rotation.x=-.14;tube(g,0,.011,-.36,.042,.32,black);part(g,0,.073,-.18,.016,.033,.026,edge);part(g,0,.073,.05,.075,.025,.025,edge);for(let i=0;i<6;i++)part(g,.055,.015,i*.012,.012,.06,.005,edge);
   }else{part(g,0,-.035,.06,.14,.18,.55,glove);part(g,0,-.045,.4,.12,.2,.26,glove);tube(g,0,.04,-.55,.031,.8,black);part(g,0,-.16,-.06,.09,.22,.15,black);tube(g,0,.165,-.09,.051,.35,black);tube(g,0,.165,-.31,.065,.11,metal);tube(g,0,.165,.12,.068,.09,metal);part(g,0,.09,-.03,.065,.09,.12,edge);part(g,.12,.018,.02,.16,.025,.025,edge);tube(g,.19,.018,.02,.025,.045,black);part(g,0,-.16,.2,.075,.2,.09,glove).rotation.x=-.25;}
-  if(held){part(g,.026,-.185,.13,.13,.15,.13,glove).rotation.x=-.18;const arm=part(g,.15,-.31,.37,.17,.2,.48,cloth);arm.rotation.y=-.34;arm.rotation.x=-.3;part(g,-.04,-.14,type===1?-.06:-.31,.14,.1,.17,glove);const left=part(g,-.19,-.29,type===1?.05:-.17,.16,.18,.45,cloth);left.rotation.y=.6;left.rotation.x=.4;part(g,.075,-.195,.2,.11,.12,.1,skin);}
+  if(held){
+    hand(g,.026,-.185,.13);sleeve(g,[.055,-.21,.21],[.24,-.39,.64],.083);
+    const supportZ=type===1?-.06:-.31;hand(g,-.025,-.12,supportZ,true);
+    sleeve(g,[-.05,-.16,supportZ+.045],[-.31,-.37,.18],.079);
+    organic(g,[.055,-.207,.218],[.053,.049,.034],black);
+    organic(g,[-.061,-.17,supportZ+.064],[.055,.049,.035],black);
+  }
   g.userData.muzzle=new THREE.Vector3(0,.03,type===0?-.84:type===1?-.52:-.97);return g;
 }
 export function createBot(scene,index){const g=new THREE.Group(),shirt=mat(index%2?0x8b775d:0x77745d),pants=mat(0x555648),vest=mat(0x3d4134),scarf=mat(0xa8997b),boots=mat(0x30362e);const hitboxes=[];
