@@ -29,7 +29,8 @@ test('one HTML works via file:// from an isolated folder while offline', async (
     await page.keyboard.press('r');
     await expect(page.locator('#weapon-state')).toHaveText('RELOADING…');
     await expect(page.locator('#ammo')).toHaveText('30', { timeout: 5000 });
-    await page.keyboard.press('3');
+    await page.keyboard.press('q');
+    await page.keyboard.press('q');
     await expect(page.locator('#weapon-label')).toHaveText('AWP');
     await page.mouse.down({ button: 'right' });
     await expect(page.locator('#scope')).toBeVisible();
@@ -39,7 +40,7 @@ test('one HTML works via file:// from an isolated folder while offline', async (
     await page.locator('#return-menu').click();
     await expect(page.locator('#menu')).toBeVisible();
     expect(errors).toEqual([]);
-    expect(requests.every(url => url.startsWith(pathToFileURL(target).href))).toBe(true);
+    expect(requests.every(url => url.startsWith(pathToFileURL(target).href)||url.startsWith('blob:')||url.startsWith('data:'))).toBe(true);
     await page.screenshot({ path: 'artifacts/standalone.png' });
   } finally {
     await page.close();

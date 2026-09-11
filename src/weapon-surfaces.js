@@ -12,8 +12,8 @@ export function weaponSurface(kind, color, metalness, roughness) {
       const p = (y * size + x) * 4;
       let value = 218 + random() * 30;
       if (kind === 'wood') {
-        const phase = x * .19 + Math.sin(y * .014) * 4 + Math.sin(x * .027 + y * .006) * 6;
-        value = 174 + 31 * Math.sin(phase) + 15 * Math.sin(phase * 3.1) + random() * 20;
+        const phase = y * .48 + Math.sin(x * .018) * 1.4 + Math.sin(x * .043 + y * .012) * .7;
+        value = 194 + 9 * Math.sin(phase) + 4 * Math.sin(phase * 3.1) + random() * 10;
       } else if (kind === 'fabric') {
         value = 195 + (x % 4 < 2 ? 20 : 0) + (y % 4 < 2 ? 18 : 0) + random() * 15;
       }

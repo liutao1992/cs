@@ -9,8 +9,8 @@ test('deployment, real controls, combat, collision, bomb and round lifecycle',as
   await page.keyboard.down('w');await expect.poll(()=>page.evaluate(()=>__game.player.z)).toBeLessThan(24);await page.keyboard.up('w');
   await page.mouse.down();await expect.poll(()=>page.evaluate(()=>__game.state.weapons[0].ammo)).toBeLessThan(29);await page.mouse.up();
   await page.keyboard.press('r');await expect(page.locator('#weapon-state')).toHaveText('RELOADING…');await expect(page.locator('#ammo')).toHaveText('30',{timeout:5000});
-  await page.keyboard.press('2');await expect(page.locator('#weapon-label')).toHaveText('USP-S');
-  await page.keyboard.press('3');await page.mouse.down({button:'right'});await expect(page.locator('#scope')).toBeVisible();await page.mouse.up({button:'right'});await expect(page.locator('#scope')).toBeHidden();
+  await page.keyboard.press('q');await expect(page.locator('#weapon-label')).toHaveText('USP-S');
+  await page.keyboard.press('q');await page.mouse.down({button:'right'});await expect(page.locator('#scope')).toBeVisible();await page.mouse.up({button:'right'});await expect(page.locator('#scope')).toBeHidden();
   await page.keyboard.press('Escape');await expect(page.locator('#pause')).toBeVisible();const time=await page.evaluate(()=>__game.state.time);await page.screenshot({path:'artifacts/pause.png'});expect(await page.evaluate(()=>__game.state.time)).toBe(time);
   // Programmatic unlock is used to avoid Chromium's Escape relock cooldown.
   await page.locator('#resume').click();await expect.poll(()=>page.evaluate(()=>__game.state.phase)).toBe('playing');

@@ -45,7 +45,9 @@ export function reloadWeapon(weapon) {
   weapon.ammo+=amount;weapon.reserve-=amount;return amount;
 }
 export const weaponDefinitions = [
-  {name:'AK-47',capacity:30,reserve:90,damage:36,interval:.105,reload:2.3,spread:.0035,recoil:.012,automatic:true,description:'7.62 MM / AUTOMATIC'},
-  {name:'USP-S',capacity:12,reserve:48,damage:31,interval:.23,reload:1.6,spread:.0018,recoil:.006,automatic:false,description:'.45 ACP / SEMI-AUTO'},
-  {name:'AWP',capacity:5,reserve:20,damage:115,interval:1.4,reload:3.1,spread:.017,recoil:.035,automatic:false,description:'.338 MAGNUM / BOLT ACTION'}
+  {name:'AK-47',capacity:30,reserve:90,damage:36,interval:.105,reload:2.3,spread:.0035,recoil:.012,automatic:true,price:2500,side:'T',description:'7.62 MM / AUTOMATIC'},
+  {name:'USP-S',capacity:12,reserve:48,damage:31,interval:.23,reload:1.6,spread:.0018,recoil:.006,automatic:false,price:500,side:'CT',description:'.45 ACP / SEMI-AUTO'},
+  {name:'AWP',capacity:5,reserve:20,damage:115,interval:1.4,reload:3.1,spread:.017,recoil:.035,automatic:false,price:4750,side:'both',description:'.338 MAGNUM / BOLT ACTION'},
+  {name:'M4A1-S',capacity:25,reserve:75,damage:33,interval:.09,reload:2.1,spread:.003,recoil:.01,automatic:true,price:3100,side:'CT',description:'5.56 MM / SILENCED'},
+  {name:'Glock-18',capacity:20,reserve:120,damage:26,interval:.14,reload:1.7,spread:.004,recoil:.008,automatic:false,price:400,side:'T',description:'9 MM / SEMI-AUTO'}
 ];
