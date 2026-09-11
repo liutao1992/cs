@@ -163,7 +163,7 @@ function capsule(group,start,end,radius,material,segments=10){
   const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius*.86,radius,length,segments,1),material);mesh.position.copy(a.add(b).multiplyScalar(.5));mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());group.add(mesh);
   organic(group,start,[radius,radius,radius],material);organic(group,end,[radius*.94,radius*.94,radius*.94],material);return mesh;
 }
-export function createBot(scene,index,elite=false,faction='T'){
+export function createBot(scene,index,elite=false,faction='T',weaponType=0){
   const isCT=faction==='CT',g=new THREE.Group();
   const uniform=mat(elite?0x743329:(isCT?(index%2?0x33434a:0x28383f):(index%2?0x8b775d:0x77745d)),0,.93),pants=mat(isCT?0x202b30:0x555648,0,.96),vest=mat(elite?0x45211d:(isCT?0x182327:0x3d4134),.1,.9),accent=mat(elite?0x8c3d2c:(isCT?0x587482:0x9a8768),.05,.9),boots=mat(0x252d2c,.15,.85);
   const hitboxes=[];if(elite)g.scale.setScalar(1.3);
@@ -178,7 +178,7 @@ export function createBot(scene,index,elite=false,faction='T'){
     const leg=new THREE.Group();leg.position.set(side*.125,.84,0);g.add(leg);const thigh=capsule(leg,[0,.03,0],[0,-.27,-.015],.105,pants,10),shin=capsule(leg,[0,-.25,-.015],[0,-.62,-.035],.09,pants,10);hitboxes.push(thigh,shin);organic(leg,[0,-.36,-.09],[.105,.075,.035],isCT?webMaterial(true,elite):accent);rounded(leg,0,-.72,-.1,.2,.18,.34,.03,boots);rounded(leg,0,-.73,-.27,.19,.12,.12,.025,black);part(leg,0,-.72,-.29,.12,.018,.02,edge);limbs.push(leg);
     const arm=new THREE.Group();arm.position.set(side*.27,1.33,-.02);g.add(arm);const upper=capsule(arm,[0,0,0],[0,-.24,-.13],.085,uniform,10),fore=capsule(arm,[0,-.23,-.13],[0,-.29,-.32],.072,webMaterial(isCT,elite),10);hitboxes.push(upper,fore);organic(arm,[0,-.32,-.36],[.07,.06,.08],glove);
   }
-  const gun=createWeapon(0,false);gun.scale.setScalar(.62);gun.position.set(.14,1.09,-.36);gun.rotation.z=-.035;g.add(gun);
+  const gun=createWeapon(weaponType,false);gun.scale.setScalar(.62);gun.position.set(.14,1.09,-.36);gun.rotation.z=-.035;g.add(gun);
   if(isCT){rounded(g,.22,1.02,.1,.13,.23,.15,.025,vest);rounded(g,-.2,1.02,.08,.13,.23,.15,.025,vest);}else{rounded(g,.2,1.03,.08,.15,.19,.16,.025,accent);rounded(g,-.2,1.03,.08,.15,.19,.16,.025,accent);}
   const soldier=createSoldier(faction,elite);
   if(soldier){
@@ -211,4 +211,11 @@ export class AudioEngine{
   waveStart(){this.tone(110,.4,.2,'sawtooth');}
   bossRoar(){this.noise(.6,220,.5);this.tone(55,.5,.4,'sawtooth');}
   slowmo(){this.sweep(400,80,.5,.2);}
+  death(){this.noise(.16,320,.3);this.tone(72,.22,.2,'sawtooth');}
+  heartbeat(){this.tone(52,.09,.32,'sine');setTimeout(()=>this.tone(46,.11,.24,'sine'),150);}
+  explosion(){this.noise(.85,340,1);this.sweep(240,38,.6,.35,'sawtooth');this.tone(42,.5,.42,'square');}
+  flashRing(){this.tone(3400,.7,.16,'sine');setTimeout(()=>this.tone(2800,.9,.1,'sine'),240);}
+  smokePop(){this.noise(.5,900,.35);this.tone(180,.3,.1,'square');}
+  knife(){this.noise(.09,2400,.3);this.tone(300,.05,.08,'square');}
+  knifeHit(){this.noise(.12,700,.4);this.tone(140,.12,.2,'sawtooth');}
 }

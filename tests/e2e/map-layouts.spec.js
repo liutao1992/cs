@@ -6,7 +6,7 @@ test('every map has a distinct, physically walkable route skeleton',async({page}
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/?test');
   const layouts=[];
-  for(const id of ['oldcity','dust2','suburban','plaza','courtyard','forest','outpost','downtown']){
+  for(const id of ['oldcity','dust2','mirage','suburban','plaza','courtyard','forest','outpost','downtown']){
     await page.selectOption('#map',id);
     const layout=await page.evaluate(()=>({
       id:__game.world.map.id,topology:__game.world.map.topology,

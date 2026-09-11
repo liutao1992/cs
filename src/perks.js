@@ -46,8 +46,8 @@ export function createPerkSystem(scene,world,audio,rand=Math.random){
     reset(){for(const p of pickups){scene.remove(p.mesh);p.mesh.traverse(m=>{if(m.isMesh){m.geometry.dispose();m.material.dispose();}});}pickups.length=0;for(const s of sparks){scene.remove(s.mesh);s.mesh.geometry.dispose();s.mesh.material.dispose();}sparks.length=0;timer=15;},
     forceSpawn(index=0){const def=PERK_DEFS[Math.min(index,PERK_DEFS.length-1)];return spawn(def);},
     spawnAirDrop(){const def=PERK_DEFS[rand()<.5?3:4];return spawn(def);},
-    update(dt,player,state,clockTime,toast){
-      timer-=dt;if(timer<=0){spawn();timer=22+rand()*10;}
+    update(dt,player,state,clockTime,toast,rate=1){
+      timer-=dt;if(timer<=0){spawn();timer=(22+rand()*10)*rate;}
       for(let i=pickups.length-1;i>=0;i--){
         const p=pickups[i];p.spin+=dt*1.6;p.mesh.rotation.y=p.spin;p.mesh.position.y=.85+Math.sin(clockTime*2.2+p.spin)*.12;p.mesh.userData.core.rotation.x=p.spin*.7;
         if(Math.hypot(player.x-p.x,player.z-p.z)<PICKUP_RADIUS){

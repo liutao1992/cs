@@ -2,6 +2,7 @@
 import { cityMaps } from './city-maps.js';
 import { natureMaps } from './nature-maps.js';
 import { downtownMap } from './downtown-map.js';
+import { mirageMap } from './mirage-map.js';
 const oldCityZones=[
   {x1:-35,x2:35,z1:20,z2:32,label:'进攻方出生点'},
   {x1:10,x2:35,z1:-32,z2:-17,label:'A 区 · 集市'},
@@ -186,6 +187,7 @@ export const MAPS=[
     build:buildDust2,
   },
   suburbanMap,
+  mirageMap,
   ...cityMaps,
   ...natureMaps,
   downtownMap,
