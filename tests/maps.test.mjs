@@ -33,6 +33,18 @@ test('every map has spawn points, waypoints, zones inside the arena',()=>{
   }
 });
 
+test('each map declares a distinct playable spatial structure and route checks',()=>{
+  const topologies=MAPS.map(map=>map.topology);
+  assert.equal(topologies.filter(Boolean).length,MAPS.length);
+  assert.equal(new Set(topologies).size,MAPS.length);
+  for(const map of MAPS){
+    assert.ok(Array.isArray(map.walkthroughs)&&map.walkthroughs.length>=3,`${map.id} needs route checks`);
+    for(const route of map.walkthroughs){
+      assert.ok(route.label&&route.from&&route.to,`${map.id} has an incomplete route`);
+    }
+  }
+});
+
 test('dust2 layout data matches the classic three-lane structure',()=>{
   const d=getMap('dust2');
   assert.equal(d.playerSpawn.z>20,true); // T side is south

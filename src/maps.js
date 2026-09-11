@@ -1,4 +1,7 @@
-// Map registry: layout data + build functions. Geometry is authored in code (no extracted assets).
+// Map registry: layout data + build functions, including selected CC0 models.
+import { cityMaps } from './city-maps.js';
+import { natureMaps } from './nature-maps.js';
+import { downtownMap } from './downtown-map.js';
 const oldCityZones=[
   {x1:-35,x2:35,z1:20,z2:32,label:'进攻方出生点'},
   {x1:10,x2:35,z1:-32,z2:-17,label:'A 区 · 集市'},
@@ -32,6 +35,14 @@ function buildOldCity(k){
   // The gateway: carved arch segments over a clear central passage.
   k.box(-4.3,2,-2,1.4,4,1.1,k.materials.light,true);k.box(4.3,2,-2,1.4,4,1.1,k.materials.light,true);
   k.arch();
+  // This is a bazaar maze, not another clean four-way crossing. Opposing
+  // stalls split the middle into short peeks and courtyard exits.
+  k.box(-1.4,1.35,7,2.1,2.7,8,k.materials.wood,true);
+  k.box(1.6,1.35,-9,2.1,2.7,8,k.materials.wood,true);
+  k.box(-9,1.2,1,5.5,2.4,.7,k.materials.wood,true);
+  k.box(10,1.2,-1,5.5,2.4,.7,k.materials.wood,true);
+  k.textPlane('香料',-1.4,3.05,11.1,2.3,.9,'#e8d59a','#6d4d30');
+  k.textPlane('布市',1.6,3.05,-5.1,2.3,.9,'#e8d59a','#6d4d30');
   k.crate(-2,10,2.2,1.8,2.2);k.crate(7,1,2.3,2.2,2.2);k.crate(-24,6,2.4,2.2,2.4);k.crate(26,-8,2.3,1.8,2.2);k.crate(23,-23,3,2.5,2.6);k.crate(26.2,-23,2.7,2,2.6);k.crate(-25,-23,3.2,2.5,3);k.crate(-28,-23,2.2,1.9,2.6);k.crate(11,-23,2,1.5,2);
   k.barrel(22,15);k.barrel(22.8,15.4);k.barrel(-7,-20);k.barrel(30,-17);
   // Doors, shop fronts, worn signs, cables, lamps, and palms.
@@ -90,6 +101,56 @@ function buildDust2(k){
   k.scatter(60,-32,32,-28,28);
 }
 
+function buildSuburban(k){
+  // Offset neighborhood plan: two through streets, a staggered center road,
+  // and short cul-de-sacs instead of a regular three-lane grid.
+  for(const x of [-24,24])for(let z=-24;z<=24;z+=8)k.model(Math.abs(z)===24?'road-crossroad':'road-straight',x,z,8,0,false);
+  for(const [x,z,yaw] of [[-8,-24,Math.PI/2],[0,-16,0],[8,-8,Math.PI/2],[0,0,0],[-8,8,Math.PI/2],[0,16,0],[8,24,Math.PI/2]])k.model('road-straight',x,z,8,yaw,false);
+  for(const [name,x,z,yaw] of [
+    ['building-type-a',-12,12,0],['building-type-c',12,12,Math.PI],
+    ['building-type-f',-12,-12,0],['building-type-a',12,-12,Math.PI],
+  ])k.model(name,x,z,8,yaw);
+  // Boundary garden walls and distant houses define the playable area.
+  k.box(-34,1.5,0,2,3,62,k.materials.light,true);k.box(34,1.5,0,2,3,62,k.materials.light,true);
+  k.box(0,1.5,-30,70,3,2,k.materials.light,true);k.box(0,1.5,30,70,3,2,k.materials.light,true);
+  for(const x of [-28,-12,12,28])k.model('building-type-c',x,-40,8,Math.PI,false);
+  for(const [x,z] of [[-30,17],[30,17],[-30,-8],[30,-8],[-30,-25],[30,-25],[-7,5],[7,-5]])k.model('tree-large',x,z,8,0,'tree');
+  // Mid cover prevents an immediate spawn-to-spawn firing line.
+  k.crate(0,6,3,2.2,2);k.crate(-3,-5,2.4,1.8,2.4);
+  k.crate(-23,-18,2.6,2.2,2.6);k.crate(25,-17,2.6,2.2,2.6);
+  k.crate(-27,8,2,1.8,2);k.crate(27,8,2,1.8,2);
+  for(const [x,z,w,d] of [[-16,20,10,1],[-16,2,10,1],[16,-2,10,1],[16,16,10,1],[-8,-18,1,8],[8,18,1,8]])k.box(x,1.1,z,w,2.2,d,k.materials.trim,true);
+  k.box(-1,1.15,7,5,2.3,1,k.materials.blue,true);k.box(1,1.15,7,1,2.3,3,k.materials.blue,true);
+  k.site(-24,-24,'A');k.site(24,-24,'B');
+  k.textPlane('A · 花园',-24,2.1,-28.95,4,1.3,'#34483c');k.textPlane('B · 街角',24,2.1,-28.95,4,1.3,'#34483c');
+}
+
+const suburbanMap={
+    id:'suburban',name:'绿荫街区',subtitle:'SUBURBAN / 郊区街区',size:'68 × 60 M',environment:'suburban',
+    playerSpawn:{x:0,z:25,yaw:0},ctPlayerSpawn:{x:0,z:-25,yaw:Math.PI},
+    botSpawns:[[0,-25],[-4,-24],[4,-24],[-24,-24],[24,-24],[-24,-12],[24,-12]],
+    tBotSpawns:[[-2,24],[2,24],[-4,26],[4,26],[-8,24],[8,24]],
+    waypoints:[{x:0,z:24},{x:-24,z:24},{x:24,z:24},{x:-24,z:0},{x:24,z:0},{x:0,z:0},{x:4,z:8},{x:0,z:-12},{x:0,z:-24},{x:-24,z:-24},{x:24,z:-24}],
+    zones:[
+      {x1:-34,x2:34,z1:20,z2:30,label:'进攻方 · 南街'},
+      {x1:-32,x2:-18,z1:-29,z2:-19,label:'A 区 · 花园'},
+      {x1:18,x2:32,z1:-29,z2:-19,label:'B 区 · 街角'},
+      {x1:-18,x2:18,z1:-29,z2:-20,label:'防守方 · 北街'},
+      {x1:-32,x2:-18,z1:-20,z2:20,label:'西侧林荫道'},
+      {x1:18,x2:32,z1:-20,z2:20,label:'东侧住宅街'},
+      {x1:-6,x2:6,z1:-20,z2:20,label:'中央大道'},
+      {x1:-34,x2:34,z1:-30,z2:30,label:'绿荫街区'},
+    ],
+    atmosphere:{ground:'#789365',bg:0xbfd8e5,sun:[-30,45,20],sunColor:0xffefce,hemi:[0xd9edff,0x6c7956,1.5],fog:[65,150],turbidity:2,rayleigh:1.2},
+    topology:'offset-residential-streets-and-yards',
+    walkthroughs:[
+      {from:{x:0,z:24},to:{x:-24,z:8},label:'西侧林荫道'},
+      {from:{x:0,z:24},to:{x:4,z:8},label:'错位中央支路'},
+      {from:{x:24,z:8},to:{x:24,z:-24},label:'东侧住宅街'},
+    ],
+    build:buildSuburban,
+};
+
 export const MAPS=[
   {
     id:'oldcity',name:'沙域 · 旧城',subtitle:'DUST SECTOR / 34° N — 06° W',size:'68 × 60 M',
@@ -99,6 +160,12 @@ export const MAPS=[
     tBotSpawns:[[-2,23],[2,23],[-4,26],[4,26],[0,20],[6,24]],
     waypoints:[{x:0,z:16},{x:0,z:0},{x:0,z:-22},{x:26,z:-20},{x:26,z:1},{x:26,z:23},{x:-26,z:23},{x:-26,z:1},{x:-26,z:-20}],
     zones:oldCityZones,
+    topology:'bazaar-maze-courtyards',
+    walkthroughs:[
+      {from:{x:0,z:19},to:{x:-4,z:4},label:'南市集折角'},
+      {from:{x:-4,z:0},to:{x:0,z:-22},label:'拱门与北院'},
+      {from:{x:-29,z:16},to:{x:-25,z:-19},label:'西侧巷道'},
+    ],
     build:buildOldCity,
   },
   {
@@ -110,8 +177,18 @@ export const MAPS=[
     waypoints:[{x:0,z:24},{x:0,z:12},{x:0,z:2},{x:0,z:-5},{x:-14,z:-5},{x:-22,z:-14},{x:-23,z:10},{x:-23,z:-4},{x:4,z:-8},{x:2,z:-20},{x:24,z:-18},{x:24,z:6},{x:24,z:16},{x:12.5,z:-19},{x:13,z:6},{x:-4,z:24},{x:8,z:24}],
     zones:dust2Zones,
     atmosphere:{ground:'#c9ad7c',bg:0xd9c096,sun:[-38,44,30],sunColor:0xffdfae,hemi:[0xd8e2ea,0x9a8258,1.15],fog:[55,140],turbidity:4,rayleigh:1.8},
+    topology:'classic-three-lane-long-mid-and-tunnel',
+    walkthroughs:[
+      {from:{x:-23,z:10},to:{x:-23,z:-4},label:'A 长道'},
+      {from:{x:0,z:24},to:{x:0,z:12},label:'中路'},
+      {from:{x:24,z:16},to:{x:24,z:8},label:'B 隧道'},
+    ],
     build:buildDust2,
   },
+  suburbanMap,
+  ...cityMaps,
+  ...natureMaps,
+  downtownMap,
 ];
 
 export function getMap(id){return MAPS.find(m=>m.id===id)||MAPS[0];}

@@ -3,6 +3,10 @@ import { createSurface } from './surfaces.js';
 import { masonryArch, palm } from './architecture.js';
 import { Sky } from '../node_modules/three/examples/jsm/objects/Sky.js';
 import { getMap } from './maps.js';
+import { createSuburbanModels } from './suburban.js';
+import modularAsset from './modular-asset.js';
+import natureAsset from './nature-asset.js';
+import downtownAsset from './downtown-asset.js';
 
 function createKit(renderer, group, atmo){
   const obstacles=[], solids=[], sites=[];
@@ -52,6 +56,7 @@ function createKit(renderer, group, atmo){
 export function createWorld(scene, renderer, mapId){
   const map=getMap(mapId),atmo=map.atmosphere||{},group=new THREE.Group();scene.add(group);
   const kit=createKit(renderer,group,atmo);
+  if(map.environment)kit.model=createSuburbanModels(group,kit.obstacles,kit.solids,{modular:modularAsset,nature:natureAsset,downtown:downtownAsset}[map.environment]||null);
   const ground=kit.box(0,-.2,0,180,.4,180,kit.materials.ground);ground.geometry.attributes.uv.copy(new THREE.BoxGeometry(1,1,1).attributes.uv);kit.solids.push(ground);
   map.build(kit);
   const sunPos=atmo.sun||[-30,48,25];
@@ -62,7 +67,16 @@ export function createWorld(scene, renderer, mapId){
   const skyEnvironmentScene=new THREE.Scene();skyEnvironmentScene.add(sky.clone());
   const environmentGenerator=new THREE.PMREMGenerator(renderer);const environment=environmentGenerator.fromScene(skyEnvironmentScene,.04,.1,300);
   scene.environment=environment.texture;scene.environmentIntensity=.3;environmentGenerator.dispose();
-  function dispose(){scene.remove(group);group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material]){if(m.map)m.map.dispose();m.dispose();}}});scene.environment?.dispose?.();scene.environment=null;}
+  function dispose(){
+    scene.remove(group);
+    const geometries=new Set(),materials=new Set(),textures=new Set();
+    group.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);});
+    for(const material of materials)for(const value of Object.values(material))if(value?.isTexture)textures.add(value);
+    for(const geometry of geometries)geometry.dispose();
+    for(const texture of textures)texture.dispose();
+    for(const material of materials)material.dispose();
+    scene.environment?.dispose?.();scene.environment=null;
+  }
   return {group,obstacles:kit.obstacles,solids:kit.solids,sites:kit.sites,materials:kit.materials,box:kit.box,map,dispose};
 }
 

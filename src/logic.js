@@ -28,7 +28,18 @@ export function findPath(start, goal, obstacles) {
     if (!distance) break;
     for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
       const x=current.x+dx,z=current.z+dz,k=key(x,z),p=world(x,z),cost=current.cost+1;
-      if(x<0||z<0||x>=nx||z>=nz||closed.has(k)||collides(p.x,p.z,obstacles,.45)||cost>=(costs.get(k)??Infinity))continue;
+      // A grid node can be clear on either side of a thin wall.  Sample the
+      // edge as well so bots do not plan a route straight through a doorway
+      // frame or a narrow market wall.
+      const clearEdge=()=>{
+        const from=world(current.x,current.z),steps=8;
+        for(let i=1;i<=steps;i++){
+          const t=i/steps;
+          if(collides(from.x+(p.x-from.x)*t,from.z+(p.z-from.z)*t,obstacles,.45))return false;
+        }
+        return true;
+      };
+      if(x<0||z<0||x>=nx||z>=nz||closed.has(k)||collides(p.x,p.z,obstacles,.45)||!clearEdge()||cost>=(costs.get(k)??Infinity))continue;
       costs.set(k,cost);parents.set(k,current);open.push({x,z,cost,score:cost+Math.abs(x-g.x)+Math.abs(z-g.z)});
     }
   }

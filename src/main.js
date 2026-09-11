@@ -11,6 +11,7 @@ import { createEconomy } from './economy.js';
 import { soldierReady } from './soldier.js';
 import { weaponsReady } from './imported-weapons.js';
 import { armsReady } from './arms.js';
+import { MAPS } from './maps.js';
 
 const $=id=>document.getElementById(id),canvas=$('game');
 let renderer;
@@ -234,6 +235,7 @@ $('pause-button').addEventListener('click',()=>pause());$('resume').addEventList
 $('sensitivity').addEventListener('input',e=>{config.sensitivity=Number(e.target.value);saveSettings();});$('volume').addEventListener('input',e=>{audio.volume=Number(e.target.value);saveSettings();});$('quality').addEventListener('change',e=>{const high=e.target.value==='high';renderer.shadowMap.enabled=high;renderer.setPixelRatio(Math.min(devicePixelRatio,high?1.75:1));scene.traverse(o=>{if(o.material)o.material.needsUpdate=true;});saveSettings();});
 function saveSettings(){try{localStorage.setItem('dust-settings',JSON.stringify({sensitivity:config.sensitivity,volume:audio.volume,quality:$('quality').value,map:config.map}));}catch{/* Storage is optional in private browsing. */}}
 try{const settings=JSON.parse(localStorage.getItem('dust-settings')||'{}');if(Number.isFinite(settings.sensitivity))config.sensitivity=Math.max(.3,Math.min(2,settings.sensitivity));if(Number.isFinite(settings.volume))audio.volume=Math.max(0,Math.min(1,settings.volume));$('sensitivity').value=config.sensitivity;$('volume').value=audio.volume;if(settings.quality==='low'){$('quality').value='low';renderer.shadowMap.enabled=false;renderer.setPixelRatio(1);}}catch{/* Invalid stored settings fall back to defaults. */}
+$('map').replaceChildren(...MAPS.map(map=>new Option(map.name,map.id)));
 $('map').value=world.map.id;drawMap($('preview-map'),world,null,[],null,true);updateDeployInfo();renderHall();$('load-status').textContent='战场就绪 · 建议使用键盘与鼠标';requestAnimationFrame(frame);
 // Deterministic inspection hooks are available only on the local test route.
 $('deploy').disabled=true;$('load-status').textContent='正在准备人物模型…';
