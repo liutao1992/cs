@@ -1,6 +1,6 @@
 # DUST SECTOR · 沙域行动
 
-一款本地浏览器第一人称战术射击游戏，使用 Three.js 构建。全部代码、样式和依赖已打包进 `index.html`，沙漠旧城、枪械和音效均在本地生成。
+一款本地浏览器第一人称战术射击游戏，使用 Three.js 构建。全部代码、样式和依赖已打包进 `index.html`，无需联网。环境材质采用 CC0 照片纹理（Poly Haven / ambientCG，见 `assets/textures/SOURCE.md`)，枪械与音效在本地生成。
 
 ## 启动
 
@@ -18,7 +18,7 @@ npm run build
 npm start
 ```
 
-`npm run build` 从 `src/index.template.html`、`src/*.js` 和 `style.css` 重新生成独立的 `index.html`，修改源码后需要重新构建。请勿直接编辑生成文件。
+`npm run build` 从 `src/index.template.html`、`src/*.js` 和 `style.css` 重新生成独立的 `index.html`，修改源码后需要重新构建。请勿直接编辑生成文件。环境纹理由 `node scripts/prepare-textures.mjs` 从 `assets/textures/` 编码进 `src/textures-asset.js`，日常改图无需重复执行。
 
 服务器方式仍可选用：`npm start` 后打开 **http://localhost:3000**，或在 macOS 双击 `启动游戏.command`。服务器仅监听本机 `127.0.0.1`；修改端口可使用 `PORT=3001 npm start`。
 

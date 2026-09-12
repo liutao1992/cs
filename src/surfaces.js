@@ -1,4 +1,31 @@
 import * as THREE from 'three';
+import textureAsset from './textures-asset.js';
+
+// Photo-texture PBR surface from the packed CC0 sets (Poly Haven/ambientCG).
+// Textures are cached per (url, colorSpace, repeat) so materials can share them.
+const textureCache=new Map();
+function loadPacked(data,{srgb,repeat,renderer}){
+  const key=data+'|'+(srgb?1:0)+'|'+(repeat??'');
+  if(!textureCache.has(key)){
+    const texture=new THREE.TextureLoader().load(data);
+    texture.colorSpace=srgb?THREE.SRGBColorSpace:THREE.NoColorSpace;
+    texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+    texture.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());
+    if(repeat)texture.repeat.set(repeat,repeat);
+    textureCache.set(key,texture);
+  }
+  return textureCache.get(key);
+}
+export function createPhotoSurface(name,{color='#ffffff',roughness=.94,repeat=null,normalScale=.85}={},renderer){
+  const def=textureAsset[name];
+  if(!def)throw new Error('Unknown texture set: '+name);
+  return new THREE.MeshStandardMaterial({
+    color:new THREE.Color(color),
+    map:loadPacked(def.map,{srgb:true,repeat,renderer}),
+    normalMap:loadPacked(def.normal,{srgb:false,repeat,renderer}),
+    roughness,normalScale:new THREE.Vector2(normalScale,normalScale),
+  });
+}
 
 // Deterministic, tileable surface data, generated locally for file:// builds.
 export function createSurface(kind, color, renderer) {

@@ -78,9 +78,9 @@ export const natureMaps=[
   metadata('forest','松林营地','PINE CAMP / 岩石与林间小径',
     [[0,24],[-28,24],[28,24],[-28,0],[28,0],[-6,2],[6,2],[0,-14],[0,-24],[-24,-24],[24,-24]],
     ['A 区 · 西营地','B 区 · 东营地','林间小径'],
-    {ground:'#637b48',bg:0xb9c9b7,sun:[-25,45,20],sunColor:0xffedc2,hemi:[0xdbe9cf,0x596144,1.5],fog:[50,130],turbidity:3,rayleigh:1.2},buildForest),
+    {groundTex:'grass',ground:'#8ba06b',ridgeColor:0x71805f,bg:0xb9c9b7,sun:[-25,45,20],sunColor:0xffedc2,hemi:[0xdbe9cf,0x596144,1.5],fog:[50,130],turbidity:3,rayleigh:1.2},buildForest),
   metadata('outpost','林间哨站','FOREST OUTPOST / 道路检查站',
     [[0,24],[-30,24],[30,24],[-30,0],[30,0],[4,6],[0,0],[-2,-8],[0,-24],[-24,-24],[24,-24]],
     ['A 区 · 补给站','B 区 · 通信站','中央检查站'],
-    {ground:'#6c7964',bg:0xadbfca,sun:[-32,36,24],sunColor:0xddeaff,hemi:[0xd9e9f1,0x55604d,1.5],fog:[45,125],turbidity:5,rayleigh:1.1},buildOutpost),
+    {groundTex:'grass',ground:'#93a684',ridgeColor:0x6d7c66,bg:0xadbfca,sun:[-32,36,24],sunColor:0xddeaff,hemi:[0xd9e9f1,0x55604d,1.5],fog:[45,125],turbidity:5,rayleigh:1.1},buildOutpost),
 ];

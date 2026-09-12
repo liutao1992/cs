@@ -142,7 +142,7 @@ const suburbanMap={
       {x1:-6,x2:6,z1:-20,z2:20,label:'中央大道'},
       {x1:-34,x2:34,z1:-30,z2:30,label:'绿荫街区'},
     ],
-    atmosphere:{ground:'#789365',bg:0xbfd8e5,sun:[-30,45,20],sunColor:0xffefce,hemi:[0xd9edff,0x6c7956,1.5],fog:[65,150],turbidity:2,rayleigh:1.2},
+    atmosphere:{groundTex:'grass',ground:'#a9bf90',ridgeColor:0x71805f,bg:0xbfd8e5,sun:[-30,45,20],sunColor:0xffefce,hemi:[0xd9edff,0x6c7956,1.5],fog:[65,150],turbidity:2,rayleigh:1.2},
     topology:'offset-residential-streets-and-yards',
     walkthroughs:[
       {from:{x:0,z:24},to:{x:-24,z:8},label:'西侧林荫道'},
@@ -161,6 +161,7 @@ export const MAPS=[
     tBotSpawns:[[-2,23],[2,23],[-4,26],[4,26],[0,20],[6,24]],
     waypoints:[{x:0,z:16},{x:0,z:0},{x:0,z:-22},{x:26,z:-20},{x:26,z:1},{x:26,z:23},{x:-26,z:23},{x:-26,z:1},{x:-26,z:-20}],
     zones:oldCityZones,
+    atmosphere:{groundTex:'sand',ground:'#c9b795',ridgeColor:0x9a8563},
     topology:'bazaar-maze-courtyards',
     walkthroughs:[
       {from:{x:0,z:19},to:{x:-4,z:4},label:'南市集折角'},
@@ -177,7 +178,7 @@ export const MAPS=[
     tBotSpawns:[[-2,24],[2,24],[-4,26],[4,26],[0,22],[6,25]],
     waypoints:[{x:0,z:24},{x:0,z:12},{x:0,z:2},{x:0,z:-5},{x:-14,z:-5},{x:-22,z:-14},{x:-23,z:10},{x:-23,z:-4},{x:4,z:-8},{x:2,z:-20},{x:24,z:-18},{x:24,z:6},{x:24,z:16},{x:12.5,z:-19},{x:13,z:6},{x:-4,z:24},{x:8,z:24}],
     zones:dust2Zones,
-    atmosphere:{ground:'#c9ad7c',bg:0xd9c096,sun:[-38,44,30],sunColor:0xffdfae,hemi:[0xd8e2ea,0x9a8258,1.15],fog:[55,140],turbidity:4,rayleigh:1.8},
+    atmosphere:{groundTex:'sand',ground:'#c9b795',ridgeColor:0x9a8563,bg:0xd9c096,sun:[-38,44,30],sunColor:0xffdfae,hemi:[0xd8e2ea,0x9a8258,1.15],fog:[55,140],turbidity:4,rayleigh:1.8},
     topology:'classic-three-lane-long-mid-and-tunnel',
     walkthroughs:[
       {from:{x:-23,z:10},to:{x:-23,z:-4},label:'A 长道'},

@@ -73,7 +73,7 @@ export const cityMaps=[
       {x1:-9,x2:9,z1:-19,z2:19,label:'中央纪念广场'},
       {x1:-34,x2:34,z1:-30,z2:30,label:'都会广场'},
     ],
-    atmosphere:{ground:'#828b90',bg:0xc3d2dd,sun:[-30,48,24],sunColor:0xe6efff,hemi:[0xd7eaff,0x7c828b,1.4],fog:[65,155],turbidity:3,rayleigh:1.2},
+    atmosphere:{groundTex:'concrete',ground:'#9aa1a4',ridgeColor:0x8a8a80,bg:0xc3d2dd,sun:[-30,48,24],sunColor:0xe6efff,hemi:[0xd7eaff,0x7c828b,1.4],fog:[65,155],turbidity:3,rayleigh:1.2},
     topology:'open-plaza-ring-and-radial-cover',
     walkthroughs:[
       {from:{x:0,z:24},to:{x:-16,z:0},label:'西侧环线'},
@@ -96,7 +96,7 @@ export const cityMaps=[
       {x1:-6,x2:6,z1:-19,z2:19,label:'中央曲巷'},
       {x1:-34,x2:34,z1:-30,z2:30,label:'红砖庭院'},
     ],
-    atmosphere:{ground:'#b9a087',bg:0xddc6ac,sun:[-36,30,18],sunColor:0xffd49e,hemi:[0xf1dfcc,0x89684e,1.25],fog:[55,145],turbidity:5,rayleigh:1.4},
+    atmosphere:{groundTex:'bricks',ground:'#bfae94',ridgeColor:0x96866c,bg:0xddc6ac,sun:[-36,30,18],sunColor:0xffd49e,hemi:[0xf1dfcc,0x89684e,1.25],fog:[55,145],turbidity:5,rayleigh:1.4},
     topology:'nested-courtyards-and-offset-gates',
     walkthroughs:[
       {from:{x:0,z:24},to:{x:-8,z:8},label:'南侧门洞'},

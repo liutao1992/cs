@@ -85,7 +85,7 @@ export const mirageMap={
     {x1:10,x2:34,z1:-28,z2:-2,label:'B 平台'},
     {x1:-34,x2:34,z1:-30,z2:30,label:'迷城蜃楼'},
   ],
-  atmosphere:{ground:'#c2a67e',bg:0xd9b98a,sun:[-40,26,28],sunColor:0xffc98a,hemi:[0xe8d9c4,0x8a7350,1.2],fog:[55,145],turbidity:5,rayleigh:2},
+  atmosphere:{groundTex:'sand',ground:'#c9b795',ridgeColor:0x9a8563,bg:0xd9b98a,sun:[-40,26,28],sunColor:0xffc98a,hemi:[0xe8d9c4,0x8a7350,1.2],fog:[55,145],turbidity:5,rayleigh:2},
   topology:'mid-window-connector-market-dual-entry',
   walkthroughs:[
     {from:{x:-22,z:24},to:{x:-24,z:-14},label:'A 宫殿长廊'},

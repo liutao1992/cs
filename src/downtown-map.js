@@ -65,7 +65,7 @@ export const downtownMap={
     {x1:18,x2:32,z1:-9,z2:21,label:'东侧服务巷'},
     {x1:-34,x2:34,z1:-30,z2:30,label:'市中心街区'},
   ],
-  atmosphere:{ground:'#777a78',bg:0xbfcad2,sun:[-32,46,26],sunColor:0xffe7c9,hemi:[0xd9e6ef,0x7c7870,1.3],fog:[60,155],turbidity:3,rayleigh:1.2},
+  atmosphere:{groundTex:'concrete',ground:'#8a8d8b',ridgeColor:0x7e8588,bg:0xbfcad2,sun:[-32,46,26],sunColor:0xffe7c9,hemi:[0xd9e6ef,0x7c7870,1.3],fog:[60,155],turbidity:3,rayleigh:1.2},
   topology:'warehouse-market-service-yard',
   walkthroughs:[
     {from:{x:-21,z:-5},to:{x:-21,z:-16},label:'A 大厅南门'},
