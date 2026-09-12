@@ -4,7 +4,7 @@ import { createWorld, drawMap } from './world.js';
 import { createWeapon, createBot, AudioEngine } from './equipment.js';
 import { createEffects } from './effects.js';
 import { createThrowSystem, NADE_DEFS as THROW_DEFS, blastDamage } from './throwables.js';
-import { moveWithCollision, collides, findPath, applyDamage, reloadWeapon, weaponDefinitions } from './logic.js';
+import { moveWithCollision, collides, findPath, applyDamage, reloadWeapon, weaponDefinitions, damageFalloff, recoilKick } from './logic.js';
 import { createStreak, registerKill, tickStreak, streakLevel, streakLabel, streakSub, computeScore } from './killstreak.js';
 import { createPerkSystem, PERK_DEFS } from './perks.js';
 import { createSurvival, waveStats } from './survival.js';
@@ -35,7 +35,7 @@ const flashMaterial=new THREE.MeshBasicMaterial({color:0xffdc7a,transparent:true
 const ray=new THREE.Raycaster(),direction=new THREE.Vector3(),audio=new AudioEngine(),keys=new Set(),effects=createEffects(scene,audio);
 const config={level:'normal',mode:'elimination',sensitivity:1,map:world.map.id,modifier:'none'},levels={easy:{count:3,reaction:1.2,accuracy:.25,damage:15,speed:1.7},normal:{count:5,reaction:.8,accuracy:.38,damage:19,speed:2.1},hard:{count:7,reaction:.48,accuracy:.58,damage:24,speed:2.6}};
 const player={x:0,z:25,y:0,vy:0,yaw:0,pitch:0,health:100,armor:100};
-const state={phase:'menu',round:0,wins:0,losses:0,time:150,elapsed:0,weapon:0,weapons:[],reload:0,cooldown:0,recoil:0,flash:0,shots:0,hits:0,kills:0,headshots:0,aim:false,mouseDown:false,bomb:null,plant:0,botCount:0,score:0,streak:createStreak(),buffs:{speed:0,damage:0},timeScale:1,pickups:0,wave:0,streakMax:0,awpKills:0,bossKills:0,untouched:true,nade:null,melee:0,upgrades:{},maxHealth:100,supplyUsed:false,weaponDefs:weaponDefinitions};
+const state={phase:'menu',round:0,wins:0,losses:0,time:150,elapsed:0,weapon:0,weapons:[],reload:0,cooldown:0,recoil:0,flash:0,shots:0,hits:0,kills:0,headshots:0,aim:false,mouseDown:false,bomb:null,plant:0,botCount:0,score:0,streak:createStreak(),buffs:{speed:0,damage:0},timeScale:1,pickups:0,wave:0,streakMax:0,awpKills:0,bossKills:0,untouched:true,nade:null,melee:0,upgrades:{},maxHealth:100,supplyUsed:false,inaccuracy:0,recoilPitch:0,recoilYaw:0,recoilShots:0,shotAge:1,weaponDefs:weaponDefinitions};
 let bots=[],tracers=[],roundDecals=[],toastTime=0,hitTime=0,damageTime=0,footstep=0,botThink=0,frameCounter=0,fpsTime=0,clockTime=0,hasFired=false,lastBombBeep=0,bannerUntil=0,slowUntil=0,achTimer=0,airdropWave=0,knifeActive=false;
 const records=createRecords(),survival=createSurvival(spawnWave,audio),economy=createEconomy(),meta=createMeta();
 const throwables=createThrowSystem(scene,()=>world,audio,effects,{getBots:()=>bots,getPlayer:()=>player,getCamera:()=>camera,onBotKilled:(b,source)=>{state.kills++;onKill(b,false,{name:source==='he'?'高爆手雷':'手雷'});},damagePlayer:damagePlayerFromNade,onExplosionAt:(point,radius)=>{for(const ref of world.explosives){if(!ref.exploded&&Math.hypot(ref.x-point.x,ref.z-point.z)<radius)explodeBarrel(ref);}}});
@@ -123,7 +123,7 @@ function startRound(){
   if(state.bomb?.mesh){scene.remove(state.bomb.mesh);state.bomb.mesh.geometry.dispose();state.bomb.mesh.material.dispose();}
   state.round++;const comp=config.mode==='competitive';if(comp){if(state.round===1){economy.reset();state.hasKit=false;}state.side=state.round<=HALF_ROUND?'T':'CT';}
   const ps=comp&&state.side==='CT'?world.map.ctPlayerSpawn:world.map.playerSpawn;Object.assign(player,{x:ps.x,z:ps.z,y:0,vy:0,yaw:ps.yaw||0,pitch:0,health:100,armor:comp?player.armor:100});
-  Object.assign(state,{phase:'playing',time:150,elapsed:0,weapon:comp?(state.side==='T'?4:1):0,weapons:weaponDefinitions.map((d,i)=>({...d,ammo:d.capacity,owned:!comp||(state.side==='T'?i===4:i===1)})),nades:{he:0,flash:0,smoke:0},nade:null,melee:0,upgrades:{},maxHealth:100,supplyUsed:false,botPlant:null,reload:0,cooldown:0,recoil:0,shots:0,hits:0,kills:0,headshots:0,aim:false,mouseDown:false,bomb:null,plant:0,score:0,streak:createStreak(),buffs:{speed:0,damage:0},timeScale:1,pickups:0,wave:0,streakMax:0,awpKills:0,bossKills:0,untouched:true});
+  Object.assign(state,{phase:'playing',time:150,elapsed:0,weapon:comp?(state.side==='T'?4:1):0,weapons:weaponDefinitions.map((d,i)=>({...d,ammo:d.capacity,owned:!comp||(state.side==='T'?i===4:i===1)})),nades:{he:0,flash:0,smoke:0},nade:null,melee:0,upgrades:{},maxHealth:100,supplyUsed:false,botPlant:null,reload:0,cooldown:0,recoil:0,shots:0,hits:0,kills:0,headshots:0,aim:false,mouseDown:false,bomb:null,plant:0,score:0,streak:createStreak(),buffs:{speed:0,damage:0},timeScale:1,pickups:0,wave:0,streakMax:0,awpKills:0,bossKills:0,untouched:true,inaccuracy:0,recoilPitch:0,recoilYaw:0,recoilShots:0,shotAge:1});
   state.modifier=resolveModifier(config.modifier);
   const fog=state.modifier.id==='sandstorm'?[14,62]:(world.map.atmosphere?.fog||[45,125]);scene.fog.near=fog[0];scene.fog.far=fog[1];
   if(state.modifier.id==='scarce')state.weapons.forEach(w=>{if(w.reserve)w.reserve=Math.floor(w.reserve/2);});
@@ -177,7 +177,7 @@ function cycleWeapon(){
   const current=owned.indexOf(state.weapon),next=owned[(current+1)%owned.length];
   switchWeapon(next);
 }
-function reload(){const w=state.weapons[state.weapon];if(state.phase!=='playing'||state.reload>0||w.ammo===w.capacity)return;if(!w.reserve){toast('备用弹药耗尽 · 按 Q 切换武器');return;}state.reload=w.reload*upgradeMods(state.upgrades||{}).reload*meta.bonusFor(state.weapon).reload;state.aim=false;audio.reload();toast('正在更换弹匣');updateHUD();}
+function reload(){const w=state.weapons[state.weapon];if(state.phase!=='playing'||state.reload>0||w.ammo===w.capacity)return;if(!w.reserve){toast('备用弹药耗尽 · 按 Q 切换武器');return;}const emptyPenalty=w.ammo===0?1.16:1;state.reload=w.reload*emptyPenalty*upgradeMods(state.upgrades||{}).reload*meta.bonusFor(state.weapon).reload;state.aim=false;audio.reload();toast(w.ammo===0?'弹匣已空 · 正在更换弹匣':'正在更换弹匣');updateHUD();}
 function canBuy(){return config.mode==='competitive'&&state.phase==='playing'&&state.elapsed<BUY_TIME&&!state.bomb;}
 function buyWeapon(i){const d=weaponDefinitions[i];if(d.side!=='both'&&d.side!==state.side){audio.deny();toast(`${state.side==='T'?'悍匪':'特警'}阵营无法购买 ${d.name}`);return false;}if(state.weapons[i].owned){toast('已持有该武器');return false;}if(!economy.spend(d.price)){audio.deny();toast('资金不足');return false;}for(const s of [0,2,3].includes(i)?[0,2,3]:[1,4])state.weapons[s].owned=false;state.weapons[i]={...d,ammo:d.capacity,reserve:d.reserve,owned:true};state.weapon=i;state.reload=0;state.cooldown=.24;state.aim=false;guns.forEach((g,gi)=>g.visible=gi===i);audio.buy();toast(`已购入 ${d.name}`);renderBuyMenu();updateHUD();return true;}
 function buyEquip(id){if(id==='armor'){if(player.armor>=100){toast('护甲已满');return false;}if(!economy.spend(1000)){audio.deny();toast('资金不足');return false;}player.armor=100;audio.buy();toast('防弹护甲已装备');}else{if(state.side!=='CT'){audio.deny();toast('仅特警阵营可购买拆弹器');return false;}if(state.hasKit){toast('已持有拆弹器');return false;}if(!economy.spend(400)){audio.deny();toast('资金不足');return false;}state.hasKit=true;audio.buy();toast('拆弹器已装备 · 拆除 5 秒');}renderBuyMenu();updateHUD();return true;}
@@ -195,14 +195,30 @@ function impact(point,normal){const m=new THREE.Mesh(new THREE.CircleGeometry(.0
 function shoot(){
   const w=state.weapons[state.weapon];if(state.phase!=='playing'||state.cooldown>0||state.reload>0)return;if(state.nade){throwSelected();return;}if(state.melee>0)return;if(!w.ammo){reload();state.cooldown=.2;audio.tone(220,.04,.08,'square');return;}
   const mods=upgradeMods(state.upgrades||{}),metaBonus=meta.bonusFor(state.weapon);
-  w.ammo--;state.shots++;state.cooldown=w.interval*mods.fireRate;state.flash=.045;state.recoil=Math.min(.1,state.recoil+w.recoil);audio.shot(state.weapon);effects.shake(state.weapon===2?.3:.15);effects.casing(camera);
-  camera.updateMatrixWorld(true);const moving=keys.has('KeyW')||keys.has('KeyS')||keys.has('KeyA')||keys.has('KeyD');let spread=w.spread*mods.spread*metaBonus.spread*(moving?3:1)*(keys.has('KeyC')?.6:1);if(state.aim)spread*=state.weapon===2?.015:.45;
+  w.ammo--;state.shots++;state.cooldown=w.interval*mods.fireRate;state.flash=.045;audio.shot(state.weapon);effects.shake(state.weapon===2?.3:.15);effects.casing(camera);
+  const crouch=keys.has('KeyC'),moving=keys.has('KeyW')||keys.has('KeyS')||keys.has('KeyA')||keys.has('KeyD');
+  state.recoilShots=Math.min(state.recoilShots+1,30);state.shotAge=0;
+  const kick=recoilKick(state.recoilShots,w.recoil*(state.aim?.5:1)*(crouch?.85:1));
+  state.recoilPitch=Math.min(.15,state.recoilPitch+kick.pitch);
+  state.recoilYaw=Math.max(-.08,Math.min(.08,state.recoilYaw+kick.yaw));
+  state.recoil=Math.min(.12,state.recoil+Math.abs(kick.pitch)*7);
+  state.inaccuracy=Math.min(w.maxInaccuracy??2,state.inaccuracy+(w.inaccuracy??.3));
+  let spread=w.spread*(1+state.inaccuracy)*mods.spread*metaBonus.spread*(moving?3:1)*(crouch?.6:1)*(player.y>0?4.5:1);if(state.aim)spread*=state.weapon===2?.015:.45;
+  camera.updateMatrixWorld(true);
   ray.setFromCamera(new THREE.Vector2((Math.random()-.5)*spread,(Math.random()-.5)*spread),camera);ray.far=120;
-  scene.updateMatrixWorld(true);const targets=bots.filter(b=>b.health>0).flatMap(b=>b.hitboxes);const intersections=ray.intersectObjects([...world.solids,...targets],false);const hit=intersections[0];const end=hit?hit.point:ray.ray.at(95,new THREE.Vector3());const origin=camera.position.clone().add(new THREE.Vector3(.2,-.15,-.45).applyQuaternion(camera.quaternion));tracer(origin,end);
-  if(hit?.object.userData.bot){const b=hit.object.userData.bot;const head=!!hit.object.userData.head||hit.point.y>b.group.position.y+1.52;b.health-=w.damage*mods.damage*metaBonus.damage*(head?4*mods.headshot:1)*(state.buffs.damage>clockTime?2:1);b.revealed=3;b.reaction=2;b.suspect={x:player.x,z:player.z};state.hits++;hitTime=.15;effects.blood(hit.point,ray.ray.direction);$('hitmarker').style.color=head?'#f5ad80':'#fff';audio.hit();if(b.health<=0){state.kills++;if(head)state.headshots++;onKill(b,head,w);}}
+  scene.updateMatrixWorld(true);const targets=bots.filter(b=>b.health>0).flatMap(b=>b.hitboxes);
+  let hit=ray.intersectObjects([...world.solids,...targets],false)[0],penetrationMult=1;
+  if(hit?.object.userData.penetrable&&w.penetrationDepth){
+    const exit=hit.point.clone().addScaledVector(ray.ray.direction,Math.max(.25,hit.object.userData.penetrable)+.04);
+    ray.set(exit,ray.ray.direction);ray.far=120;
+    const beyond=ray.intersectObjects([...world.solids,...targets],false)[0];
+    if(beyond?.object.userData.bot){hit=beyond;penetrationMult=w.penetrationDamage??.6;}
+  }
+  const end=hit?hit.point:ray.ray.at(95,new THREE.Vector3());const origin=camera.position.clone().add(new THREE.Vector3(.2,-.15,-.45).applyQuaternion(camera.quaternion));tracer(origin,end);
+  if(hit?.object.userData.bot){const b=hit.object.userData.bot;const head=!!hit.object.userData.head||hit.point.y>b.group.position.y+1.52;const falloff=damageFalloff(camera.position.distanceTo(hit.point),w);b.health-=w.damage*falloff*penetrationMult*mods.damage*metaBonus.damage*(head?4*mods.headshot:1)*(state.buffs.damage>clockTime?2:1);b.revealed=3;b.reaction=2;b.suspect={x:player.x,z:player.z};state.hits++;hitTime=.15;effects.blood(hit.point,ray.ray.direction);$('hitmarker').style.color=head?'#f5ad80':'#fff';audio.hit();if(b.health<=0){state.kills++;if(head)state.headshots++;onKill(b,head,w);}}
   else if(hit?.object.userData.explosive){explodeBarrel(hit.object.userData.explosive);}
   else if(hit){const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);impact(hit.point,normal);effects.dust(hit.point,normal);}
-  player.pitch=Math.min(1.4,player.pitch+w.recoil*(state.aim?.5:1));flash.position.copy(guns[state.weapon].userData.muzzle);flash.rotation.z=Math.random()*6;flash.visible=true;updateHUD();
+  flash.position.copy(guns[state.weapon].userData.muzzle);flash.rotation.z=Math.random()*6;flash.visible=true;updateHUD();
 }
 function damagePlayerFromNade(raw,source){if(state.phase!=='playing')return;const result=applyDamage(player.health,player.armor,raw);Object.assign(player,result);state.untouched=false;damageTime=.35;effects.shake(.55);audio.noise(.12,420,.24);if(player.health<=0)finish(false,`你被${source}波及，倒地不起。`);}
 function explodeBarrel(ref){
@@ -231,7 +247,7 @@ function updateBots(dt){const level=levels[config.level];botThink-=dt;const thin
       if(b.nadeTimer<=0){b.nadeTimer=17+Math.random()*9;const from=pos.clone().add(new THREE.Vector3(0,1.4,0)),to=new THREE.Vector3(player.x,player.y+.15,player.z).sub(from).normalize();throwables.throwNade('he',from,to);audio.tone(240,.09,.1,'square');}
     }
     if(b.seen&&b.health/b.maxHealth<.4&&b.role!=='sniper'&&b.role!=='elite')b.retreatT=Math.max(b.retreatT,2.4);else b.retreatT=Math.max(0,b.retreatT-dt);
-    if(b.seen){b.reaction+=dt;b.revealed=1.2;b.group.rotation.y=Math.atan2(-dx,-dz);if(b.reaction>(b.stats?.reaction??level.reaction)&&b.fireTimer<=0){b.fireTimer=(b.roleFire??.38)+Math.random()*(b.roleSpread??.45);audio.shot(0,true);const from=pos.clone().add(new THREE.Vector3(0,1.3,0)),to=new THREE.Vector3(player.x,player.y+1.2,player.z);tracer(from,to,0xf3ac62);const chance=(b.stats?.accuracy??level.accuracy)*(dist<12?1.15:.8)*(keys.has('KeyC')?.8:1)*(b.retreatT>0?.7:1);if(Math.random()<chance){const damage=applyDamage(player.health,player.armor,(b.stats?.damage??level.damage)*(b.damageMult||1));Object.assign(player,damage);state.untouched=false;damageTime=.3;effects.hurt(Math.atan2(-(pos.x-player.x),-(pos.z-player.z))-player.yaw);effects.shake(.34);audio.noise(.08,500,.18);if(player.health<=0){finish(false,config.mode==='survival'?`你被 ${b.name} 击倒，倒在了第 ${state.wave} 波的战场上。`:`你被 ${b.name} 击倒。利用掩体、短点射和静步重新组织进攻。`);break;}}}}
+    if(b.seen){b.reaction+=dt;b.revealed=1.2;b.group.rotation.y=Math.atan2(-dx,-dz);if(b.reaction>(b.stats?.reaction??level.reaction)&&b.fireTimer<=0){b.fireTimer=(b.roleFire??.38)+Math.random()*(b.roleSpread??.45);audio.shot(0,true);const from=pos.clone().add(new THREE.Vector3(0,1.3,0)),to=new THREE.Vector3(player.x,player.y+1.2,player.z);tracer(from,to,0xf3ac62);const chance=(b.stats?.accuracy??level.accuracy)*(dist<12?1.15:.8)*(keys.has('KeyC')?.8:1)*(b.retreatT>0?.7:1);if(Math.random()<chance){const damage=applyDamage(player.health,player.armor,(b.stats?.damage??level.damage)*(b.damageMult||1)*damageFalloff(dist,{falloffStart:18,falloffEnd:48,falloffMin:.65}));Object.assign(player,damage);state.untouched=false;damageTime=.3;effects.hurt(Math.atan2(-(pos.x-player.x),-(pos.z-player.z))-player.yaw);effects.shake(.34);audio.noise(.08,500,.18);if(player.health<=0){finish(false,config.mode==='survival'?`你被 ${b.name} 击倒，倒在了第 ${state.wave} 波的战场上。`:`你被 ${b.name} 击倒。利用掩体、短点射和静步重新组织进攻。`);break;}}}}
     else b.reaction=Math.max(0,b.reaction-dt*2);
     if(!b.seen||dist>16||(state.botPlant&&state.side==='CT'&&state.botPlant.bot===b)){
       if(b.pathTime<=0){b.pathTime=1.2+Math.random()*.4;const target=chooseObjective({role:b.role,anchor:b.anchor,suspect:b.suspect,revealed:b.revealed,retreat:b.retreatT>0,bomb:state.bomb,botPlant:config.mode==='competitive'?state.botPlant?.site??null:null,isCarrier:state.botPlant?.bot===b,side:state.side,mode:config.mode,elapsed:state.elapsed,seen:b.seen,player,waypoints:world.map.waypoints,index:b.patrol});b.path=findPath(pos,target,world.obstacles);}
@@ -271,18 +287,24 @@ function updatePlayer(dt){
   const crouch=keys.has('KeyC'),walk=keys.has('ShiftLeft')||keys.has('ShiftRight'),speed=(crouch?2.1:walk?2.6:4.8)*(state.aim?.68:1)*(state.plant>0?0:1)*(state.buffs.speed>clockTime?1.35:1)*upgradeMods(state.upgrades||{}).speed;let mx=Number(keys.has('KeyD'))-Number(keys.has('KeyA')),mz=Number(keys.has('KeyS'))-Number(keys.has('KeyW'));const moving=mx!==0||mz!==0;
   if(moving){const length=Math.hypot(mx,mz);mx/=length;mz/=length;const dx=(mx*Math.cos(player.yaw)+mz*Math.sin(player.yaw))*speed*dt,dz=(-mx*Math.sin(player.yaw)+mz*Math.cos(player.yaw))*speed*dt;moveWithCollision(player,dx,dz,world.obstacles,.36,player.y);footstep-=dt;if(footstep<=0&&player.y===0){if(!walk&&!crouch)audio.step();footstep=walk?.53:.36;}}
   if(keys.has('Space')&&player.y===0&&!crouch){player.vy=5.2;keys.delete('Space');}player.vy-=15*dt;player.y=Math.max(0,player.y+player.vy*dt);if(player.y===0)player.vy=0;
-  camera.position.set(player.x,player.y+(crouch?1.1:1.65)+(moving&&player.y===0?Math.sin(clockTime*(walk?8:12))*.026:0),player.z);camera.rotation.set(player.pitch,player.yaw,0,'YXZ');
+  state.shotAge+=dt;
+  const recover=state.shotAge>.5?10:state.shotAge>.14?6:0;
+  if(recover){const factor=Math.exp(-dt*recover);state.recoilPitch*=factor;state.recoilYaw*=factor;}
+  if(state.shotAge>.55)state.recoilShots=0;
+  state.inaccuracy=Math.max(0,state.inaccuracy*Math.exp(-dt*(state.shotAge>.35?9:2.4)));
+  if(state.shotAge>.6)state.inaccuracy=0;
+  camera.position.set(player.x,player.y+(crouch?1.1:1.65)+(moving&&player.y===0?Math.sin(clockTime*(walk?8:12))*.026:0),player.z);camera.rotation.set(player.pitch+state.recoilPitch,player.yaw+state.recoilYaw,0,'YXZ');
   const fov=state.aim?(state.weapon===2?25:59):78;camera.fov=THREE.MathUtils.lerp(camera.fov,fov,Math.min(1,dt*14));camera.updateProjectionMatrix();
   state.cooldown=Math.max(0,state.cooldown-dt);state.melee=Math.max(0,state.melee-dt);if(state.reload>0){state.reload-=dt;if(state.reload<=0){reloadWeapon(state.weapons[state.weapon]);audio.reload();toast('换弹完成');}}
   if(state.mouseDown&&(!hasFired||state.weapons[state.weapon].automatic)){shoot();hasFired=true;}
-  state.recoil=Math.max(0,state.recoil-dt*.15);const bob=moving?Math.sin(clockTime*9)*.012:Math.sin(clockTime*1.5)*.003;
+  state.recoil=Math.max(0,state.recoil-dt*.9);const bob=moving?Math.sin(clockTime*9)*.012:Math.sin(clockTime*1.5)*.003;
   const reloadProgress=state.reload>0?1-state.reload/state.weapons[state.weapon].reload:0,reloadMotion=Math.sin(reloadProgress*Math.PI);
   gunRig.position.set(state.aim&&state.weapon!==2?.015:.29,-.29+bob-reloadMotion*.06,-.88+state.recoil*.8);
   gunRig.rotation.set(state.recoil*.75,state.aim?0:.10,-reloadMotion*.18);state.flash=Math.max(0,state.flash-dt);flash.visible=state.flash>0;flash.scale.setScalar(.7+Math.random()*.6);
   const meleeActive=state.melee>0;if(meleeActive!==knifeActive){knifeActive=meleeActive;knifeRig.visible=meleeActive;guns[state.weapon].visible=!meleeActive;}
   if(meleeActive){const swing=1-state.melee/.42;knifeRig.position.set(.26-.18*Math.sin(swing*Math.PI),-.3+.06*Math.sin(swing*Math.PI),-.72+.34*Math.sin(swing*Math.PI));knifeRig.rotation.set(-.2+Math.sin(swing*Math.PI)*1.5,-.15+.55*Math.sin(swing*Math.PI),.35-.9*Math.sin(swing*Math.PI));}
   guns[state.weapon].userData.updateArms(reloadProgress);
-  $('crosshair').style.setProperty('--spread',`${(state.aim?4:7)+(moving?4:0)+state.recoil*170}px`);setVisible('scope',state.aim&&state.weapon===2);setVisible('crosshair',!(state.aim&&state.weapon===2));
+  $('crosshair').style.setProperty('--spread',`${(state.aim?4:7)+(moving?4:0)+(player.y>0?10:0)+state.recoil*170+state.inaccuracy*9}px`);setVisible('scope',state.aim&&state.weapon===2);setVisible('crosshair',!(state.aim&&state.weapon===2));
 }
 function updateEffects(dt){for(let i=tracers.length-1;i>=0;i--){const fx=tracers[i];fx.life-=dt;fx.mesh.material.opacity=Math.max(0,fx.life/fx.total);if(fx.life<=0){scene.remove(fx.mesh);fx.mesh.geometry.dispose();fx.mesh.material.dispose();tracers.splice(i,1);}}toastTime-=dt;if(toastTime<=0)$('toast').style.opacity='0';hitTime-=dt;$('hitmarker').style.opacity=hitTime>0?'1':'0';damageTime=Math.max(0,damageTime-dt);$('damage').style.opacity=String(damageTime*2.4);}
 let last=performance.now();
